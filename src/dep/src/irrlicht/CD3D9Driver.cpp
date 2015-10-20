@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2011 Nikolaus Gebhardt
+// Copyright (C) 2002-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -681,6 +681,10 @@ bool CD3D9Driver::queryFeature(E_VIDEO_DRIVER_FEATURE feature) const
 		return (Caps.RasterCaps & (D3DPRASTERCAPS_DEPTHBIAS|D3DPRASTERCAPS_SLOPESCALEDEPTHBIAS)) != 0;
 	case EVDF_BLEND_OPERATIONS:
 	case EVDF_TEXTURE_MATRIX:
+#ifdef _IRR_COMPILE_WITH_CG_
+	// available iff. define is present
+	case EVDF_CG:
+#endif
 		return true;
 	default:
 		return false;
@@ -2485,6 +2489,9 @@ void CD3D9Driver::setRenderStatesStencilShadowMode(bool zfail, u32 debugDataVisi
 		pID3DDevice->SetRenderState( D3DRS_SRCBLEND, D3DBLEND_ZERO );
 		pID3DDevice->SetRenderState( D3DRS_DESTBLEND, D3DBLEND_ONE );
 
+		pID3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+		pID3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS);
+
 		//if (!(debugDataVisible & (scene::EDS_SKELETON|scene::EDS_MESH_WIRE_OVERLAY)))
 		//	pID3DDevice->SetRenderState(D3DRS_COLORWRITEENABLE, 0);
 		if ((debugDataVisible & scene::EDS_MESH_WIRE_OVERLAY))
@@ -2783,11 +2790,14 @@ const wchar_t* CD3D9Driver::getName() const
 //! volume. Then, use IVideoDriver::drawStencilShadow() to visualize the shadow.
 void CD3D9Driver::drawStencilShadowVolume(const core::array<core::vector3df>& triangles, bool zfail, u32 debugDataVisible)
 {
-	const u32 count = triangles.size();
-	if (!Params.Stencilbuffer || !count)
+	if (!Params.Stencilbuffer)
 		return;
 
 	setRenderStatesStencilShadowMode(zfail, debugDataVisible);
+
+	const u32 count = triangles.size();
+	if (!count)
+		return;
 
 	if (!zfail)
 	{
@@ -3406,7 +3416,7 @@ bool CD3D9Driver::setClipPlane(u32 index, const core::plane3df& plane, bool enab
 	if (index >= MaxUserClipPlanes)
 		return false;
 
-	HRESULT ok = pID3DDevice->SetClipPlane(index, (const float*)&plane);
+	HRESULT ok = pID3DDevice->SetClipPlane(index, (const float*)&(plane.Normal.X));
 	if (D3D_OK == ok)
 		enableClipPlane(index, enable);
 	return true;

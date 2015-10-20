@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2011 Nikolaus Gebhardt
+// Copyright (C) 2002-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -1810,6 +1810,7 @@ bool CXMeshFileLoader::parseDataObjectAnimationKey(ISkinnedMesh::SJoint *joint)
 				ISkinnedMesh::SRotationKey *key=AnimatedMesh->addRotationKey(joint);
 				key->frame=time;
 				key->rotation.set(X,Y,Z,W);
+				key->rotation.normalize();
 			}
 			break;
 		case 1: //scale
@@ -1877,8 +1878,10 @@ bool CXMeshFileLoader::parseDataObjectAnimationKey(ISkinnedMesh::SJoint *joint)
 
 				ISkinnedMesh::SRotationKey *keyR=AnimatedMesh->addRotationKey(joint);
 				keyR->frame=time;
-				keyR->rotation= core::quaternion(mat);
 
+				// IRR_TEST_BROKEN_QUATERNION_USE: TODO - switched from mat to mat.getTransposed() for downward compatibility. 
+				//								   Not tested so far if this was correct or wrong before quaternion fix!
+				keyR->rotation= core::quaternion(mat.getTransposed());
 
 				ISkinnedMesh::SPositionKey *keyP=AnimatedMesh->addPositionKey(joint);
 				keyP->frame=time;
@@ -2267,6 +2270,8 @@ void CXMeshFileLoader::readUntilEndOfLine()
 
 u16 CXMeshFileLoader::readBinWord()
 {
+	if (P>=End)
+		return 0;
 #ifdef __BIG_ENDIAN__
 	const u16 tmp = os::Byteswap::byteswap(*(u16 *)P);
 #else
@@ -2279,6 +2284,8 @@ u16 CXMeshFileLoader::readBinWord()
 
 u32 CXMeshFileLoader::readBinDWord()
 {
+	if (P>=End)
+		return 0;
 #ifdef __BIG_ENDIAN__
 	const u32 tmp = os::Byteswap::byteswap(*(u32 *)P);
 #else

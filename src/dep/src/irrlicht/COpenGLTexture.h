@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2011 Nikolaus Gebhardt
+// Copyright (C) 2002-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -152,7 +152,7 @@ public:
 
 	//! FrameBufferObject constructor
 	COpenGLFBOTexture(const core::dimension2d<u32>& size, const io::path& name,
-		COpenGLDriver* driver = 0, const ECOLOR_FORMAT format = ECF_UNKNOWN);
+		COpenGLDriver* driver = 0, ECOLOR_FORMAT format = ECF_UNKNOWN);
 
 	//! destructor
 	virtual ~COpenGLFBOTexture();

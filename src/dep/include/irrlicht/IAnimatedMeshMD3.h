@@ -1,4 +1,4 @@
-// Copyright (C) 2007-2011 Nikolaus Gebhardt / Thomas Alten
+// Copyright (C) 2007-2012 Nikolaus Gebhardt / Thomas Alten
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -165,10 +165,6 @@ namespace scene
 		// construct for searching
 		SMD3QuaternionTag( const core::stringc& name )
 			: Name ( name ) {}
-
-		// construct from a matrix
-		SMD3QuaternionTag ( const core::stringc& name, const core::matrix4 &m )
-			: Name(name), position(m.getTranslation()), rotation(m) {}
 
 		// construct from a position and euler angles in degrees
 		SMD3QuaternionTag ( const core::vector3df &pos, const core::vector3df &angle )

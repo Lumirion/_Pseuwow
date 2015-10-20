@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2011 Nikolaus Gebhardt
+// Copyright (C) 2002-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -121,10 +121,8 @@ CNullDriver::CNullDriver(io::IFileSystem* io, const core::dimension2d<u32>& scre
 
 	// create surface loader
 
-#ifdef _IRR_COMPILE_WITH_HALFLIFE_LOADER_
-	SurfaceLoader.push_back(video::createImageLoaderHalfLife());
-#endif
 #ifdef _IRR_COMPILE_WITH_WAL_LOADER_
+	SurfaceLoader.push_back(video::createImageLoaderHalfLife());
 	SurfaceLoader.push_back(video::createImageLoaderWAL());
 #endif
 #ifdef _IRR_COMPILE_WITH_LMP_LOADER_
@@ -1017,7 +1015,7 @@ void CNullDriver::makeColorKeyTexture(video::ITexture* texture,
 
 		for (u32 pixel = 0; pixel < pixels; ++ pixel)
 		{
-			// If the colour matches the reference colour, ignoring alphas,
+			// If the color matches the reference color, ignoring alphas,
 			// set the alpha to zero.
 			if(((*p) & 0x7fff) == refZeroAlpha)
 			{
@@ -1051,7 +1049,7 @@ void CNullDriver::makeColorKeyTexture(video::ITexture* texture,
 		const u32 pixels = pitch * dim.Height;
 		for (u32 pixel = 0; pixel < pixels; ++ pixel)
 		{
-			// If the colour matches the reference colour, ignoring alphas,
+			// If the color matches the reference color, ignoring alphas,
 			// set the alpha to zero.
 			if(((*p) & 0x00ffffff) == refZeroAlpha)
 			{
@@ -1066,6 +1064,7 @@ void CNullDriver::makeColorKeyTexture(video::ITexture* texture,
 
 		texture->unlock();
 	}
+	texture->regenerateMipMapLevels();
 }
 
 

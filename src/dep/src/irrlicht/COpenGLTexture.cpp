@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2011 Nikolaus Gebhardt
+// Copyright (C) 2002-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -797,7 +797,7 @@ COpenGLFBODepthTexture::COpenGLFBODepthTexture(
 #endif
 		{
 			// generate depth texture
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, ImageSize.Width,
+			glTexImage2D(GL_TEXTURE_2D, 0, Driver->getZBufferBits(), ImageSize.Width,
 				ImageSize.Height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
 
 			// generate stencil texture
@@ -817,7 +817,7 @@ COpenGLFBODepthTexture::COpenGLFBODepthTexture(
 		Driver->extGlGenRenderbuffers(1, &DepthRenderBuffer);
 		Driver->extGlBindRenderbuffer(GL_RENDERBUFFER_EXT, DepthRenderBuffer);
 		Driver->extGlRenderbufferStorage(GL_RENDERBUFFER_EXT,
-				GL_DEPTH_COMPONENT, ImageSize.Width,
+				Driver->getZBufferBits(), ImageSize.Width,
 				ImageSize.Height);
 	}
 #endif

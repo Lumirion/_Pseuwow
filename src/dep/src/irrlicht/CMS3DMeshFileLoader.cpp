@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2011 Nikolaus Gebhardt
+// Copyright (C) 2002-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -501,7 +501,9 @@ bool CMS3DMeshFileLoader::load(io::IReadFile* file)
 
 			tmpMatrix=jnt->LocalMatrix*tmpMatrix;
 
-			k->rotation  = core::quaternion(tmpMatrix);
+			// IRR_TEST_BROKEN_QUATERNION_USE: TODO - switched from tmpMatrix to tmpMatrix.getTransposed() for downward compatibility. 
+			//								   Not tested so far if this was correct or wrong before quaternion fix!
+			k->rotation  = core::quaternion(tmpMatrix.getTransposed());
 		}
 
 		// get translation keyframes

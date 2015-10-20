@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2011 Luke Hoschke
+// Copyright (C) 2006-2012 Luke Hoschke
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -177,7 +177,8 @@ bool CB3DMeshFileLoader::readChunkNODE(CSkinnedMesh::SJoint *inJoint)
 	positionMatrix.setTranslation( joint->Animatedposition );
 	core::matrix4 scaleMatrix;
 	scaleMatrix.setScale( joint->Animatedscale );
-	core::matrix4 rotationMatrix = joint->Animatedrotation.getMatrix();
+	core::matrix4 rotationMatrix;
+	joint->Animatedrotation.getMatrix_transposed(rotationMatrix);
 
 	joint->LocalMatrix = positionMatrix * rotationMatrix * scaleMatrix;
 
@@ -723,6 +724,7 @@ bool CB3DMeshFileLoader::readChunkKEYS(CSkinnedMesh::SJoint *inJoint)
 					oldRotKey=AnimatedMesh->addRotationKey(inJoint);
 					oldRotKey->frame = (f32)frame-1;
 					oldRot[1].set(oldRotKey->rotation.set(data[1], data[2], data[3], data[0]));
+					oldRot[1].normalize();
 				}
 			}
 			else if (oldRotKey==0 && isFirst[2])
@@ -731,6 +733,7 @@ bool CB3DMeshFileLoader::readChunkKEYS(CSkinnedMesh::SJoint *inJoint)
 				oldRotKey->frame = (f32)frame-1;
 				// meant to be in this order since b3d stores W first
 				oldRot[0].set(oldRotKey->rotation.set(data[1], data[2], data[3], data[0]));
+				oldRot[0].normalize();
 				oldRotKey=0;
 				isFirst[2]=false;
 			}
@@ -742,6 +745,7 @@ bool CB3DMeshFileLoader::readChunkKEYS(CSkinnedMesh::SJoint *inJoint)
 				oldRotKey->frame = (f32)frame-1;
 				// meant to be in this order since b3d stores W first
 				oldRot[1].set(oldRotKey->rotation.set(data[1], data[2], data[3], data[0]));
+				oldRot[1].normalize();
 			}
 		}
 	}

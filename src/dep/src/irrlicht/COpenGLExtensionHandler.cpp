@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2011 Nikolaus Gebhardt
+// Copyright (C) 2002-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -787,6 +787,10 @@ bool COpenGLExtensionHandler::queryFeature(E_VIDEO_DRIVER_FEATURE feature) const
 		return (Version>=120) || FeatureAvailable[IRR_EXT_blend_minmax] ||
 			FeatureAvailable[IRR_EXT_blend_subtract] || FeatureAvailable[IRR_EXT_blend_logic_op];
 	case EVDF_TEXTURE_MATRIX:
+#ifdef _IRR_COMPILE_WITH_CG_
+	// available iff. define is present
+	case EVDF_CG:
+#endif
 		return true;
 	default:
 		return false;

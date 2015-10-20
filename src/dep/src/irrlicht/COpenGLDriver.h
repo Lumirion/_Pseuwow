@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2011 Nikolaus Gebhardt
+// Copyright (C) 2002-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in Irrlicht.h
 
@@ -401,6 +401,9 @@ namespace video
 
 		//! Convert E_BLEND_FACTOR to OpenGL equivalent
 		GLenum getGLBlend(E_BLEND_FACTOR factor) const;
+
+		//! Get ZBuffer bits.
+		GLenum getZBufferBits() const;
 
 		//! Get Cg context
 		#ifdef _IRR_COMPILE_WITH_CG_

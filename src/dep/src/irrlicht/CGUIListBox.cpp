@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2011 Nikolaus Gebhardt
+// Copyright (C) 2002-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -267,11 +267,11 @@ bool CGUIListBox::OnEvent(const SEvent& event)
 					default:
 						break;
 				}
-				if (Selected >= (s32)Items.size())
-					Selected = Items.size() - 1;
-				else
 				if (Selected<0)
 					Selected = 0;
+				if (Selected >= (s32)Items.size())
+					Selected = Items.size() - 1;	// will set Selected to -1 for empty listboxes which is correct
+				
 
 				recalculateScrollPos();
 
@@ -511,7 +511,7 @@ void CGUIListBox::draw()
 	clientClip.clipAgainst(AbsoluteClippingRect);
 
 	skin->draw3DSunkenPane(this, skin->getColor(EGDC_3D_HIGH_LIGHT), true,
-		DrawBack, frameRect, &clientClip);
+		DrawBack, frameRect, &AbsoluteClippingRect);
 
 	if (clipRect)
 		clientClip.clipAgainst(*clipRect);

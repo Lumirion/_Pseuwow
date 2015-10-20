@@ -1,4 +1,4 @@
-// Copyright (C) 2007-2011 Nikolaus Gebhardt
+// Copyright (C) 2007-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -11,7 +11,7 @@
 #elif defined (__DMC__)
 #	pragma pack( pop )
 #elif defined( __GNUC__ )
-#   if (__GNUC__ >= 4 ) && (__GNUC_MINOR__ >= 7)
+#   if (__GNUC__ > 4 ) || ((__GNUC__ == 4 ) && (__GNUC_MINOR__ >= 7))
 #	    pragma pack( pop, packing )
 #   endif
 #endif

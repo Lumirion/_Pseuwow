@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2011 Nikolaus Gebhardt
+// Copyright (C) 2002-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -172,9 +172,6 @@
 #include "CDefaultSceneNodeAnimatorFactory.h"
 
 #include "CGeometryCreator.h"
-
-//! Enable debug features
-#define SCENEMANAGER_DEBUG
 
 namespace irr
 {
@@ -1326,7 +1323,7 @@ u32 CSceneManager::registerNodeForRendering(ISceneNode* node, E_SCENE_NODE_RENDE
 		break;
 	}
 
-#ifdef SCENEMANAGER_DEBUG
+#ifdef _IRR_SCENEMANAGER_DEBUG
 	s32 index = Parameters.findAttribute ( "calls" );
 	Parameters.setAttribute ( index, Parameters.getAttributeAsInt ( index ) + 1 );
 
@@ -1348,12 +1345,14 @@ void CSceneManager::drawAll()
 	if (!Driver)
 		return;
 
+#ifdef _IRR_SCENEMANAGER_DEBUG
 	// reset attributes
 	Parameters.setAttribute ( "culled", 0 );
 	Parameters.setAttribute ( "calls", 0 );
 	Parameters.setAttribute ( "drawn_solid", 0 );
 	Parameters.setAttribute ( "drawn_transparent", 0 );
 	Parameters.setAttribute ( "drawn_transparent_effect", 0 );
+#endif
 
 	u32 i; // new ISO for scoping problem in some compilers
 
@@ -1364,6 +1363,8 @@ void CSceneManager::drawAll()
 	Driver->setTransform ( video::ETS_WORLD, core::IdentityMatrix );
 	for (i=video::ETS_COUNT-1; i>=video::ETS_TEXTURE_0; --i)
 		Driver->setTransform ( (video::E_TRANSFORMATION_STATE)i, core::IdentityMatrix );
+
+	// TODO: This should not use an attribute here but a real parameter when necessary (too slow!)
 	Driver->setAllowZWriteOnTransparent(Parameters.getAttributeAsBool( ALLOW_ZWRITE_ON_TRANSPARENT) );
 
 	// do animations and other stuff.
@@ -1500,7 +1501,9 @@ void CSceneManager::drawAll()
 				SolidNodeList[i].Node->render();
 		}
 
+#ifdef _IRR_SCENEMANAGER_DEBUG
 		Parameters.setAttribute("drawn_solid", (s32) SolidNodeList.size() );
+#endif
 		SolidNodeList.set_used(0);
 
 		if (LightManager)
@@ -1563,7 +1566,9 @@ void CSceneManager::drawAll()
 				TransparentNodeList[i].Node->render();
 		}
 
+#ifdef _IRR_SCENEMANAGER_DEBUG
 		Parameters.setAttribute ( "drawn_transparent", (s32) TransparentNodeList.size() );
+#endif
 		TransparentNodeList.set_used(0);
 
 		if (LightManager)
@@ -1594,8 +1599,9 @@ void CSceneManager::drawAll()
 			for (i=0; i<TransparentEffectNodeList.size(); ++i)
 				TransparentEffectNodeList[i].Node->render();
 		}
-
+#ifdef _IRR_SCENEMANAGER_DEBUG
 		Parameters.setAttribute ( "drawn_transparent_effect", (s32) TransparentEffectNodeList.size() );
+#endif
 		TransparentEffectNodeList.set_used(0);
 	}
 
@@ -2110,6 +2116,9 @@ bool CSceneManager::saveScene(const io::path& filename, ISceneUserDataSerializer
 		ret = saveScene(file, userDataSerializer, node);
 		file->drop();
 	}
+	else
+		os::Printer::log("Unable to open file", filename, ELL_ERROR);
+
 	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 	return ret;
 }
@@ -2120,22 +2129,35 @@ bool CSceneManager::saveScene(io::IWriteFile* file, ISceneUserDataSerializer* us
 {
 	if (!file)
 	{
-		_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 		return false;
 	}
 
+	bool result=false;
 	io::IXMLWriter* writer = FileSystem->createXMLWriter(file);
 	if (!writer)
 	{
-		_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
-		return false;
+		os::Printer::log("Unable to create XML writer", file->getFileName(), ELL_ERROR);
 	}
+	else
+	{
+		result = saveScene(writer, FileSystem->getFileDir(FileSystem->getAbsolutePath(file->getFileName())), userDataSerializer, node);
+		writer->drop();
+	}
+	return result;
+}
+
+
+//! Saves the current scene into a file.
+bool CSceneManager::saveScene(io::IXMLWriter* writer, const io::path& currentPath, ISceneUserDataSerializer* userDataSerializer, ISceneNode* node)
+{
+	if (!writer)
+		return false;
+
 	if (!node)
 		node=this;
 
 	writer->writeXMLHeader();
-	writeSceneNode(writer, node, userDataSerializer, FileSystem->getFileDir(FileSystem->getAbsolutePath(file->getFileName())).c_str(), true);
-	writer->drop();
+	writeSceneNode(writer, node, userDataSerializer, currentPath.c_str(), true);
 
 	return true;
 }
@@ -2144,29 +2166,17 @@ bool CSceneManager::saveScene(io::IWriteFile* file, ISceneUserDataSerializer* us
 //! Loads a scene.
 bool CSceneManager::loadScene(const io::path& filename, ISceneUserDataSerializer* userDataSerializer, ISceneNode* rootNode)
 {
-	bool ret = false;
-
 	io::IReadFile* file = FileSystem->createAndOpenFile(filename);
 
 	if (!file)
 	{
 		os::Printer::log("Unable to open scene file", filename.c_str(), ELL_ERROR);
-		_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 		return false;
 	}
 
-	// try scene loaders in reverse order
-	s32 i = SceneLoaderList.size()-1;
-	for (; i >= 0 && !ret; --i)
-		if (SceneLoaderList[i]->isALoadableFileExtension(filename))
-			ret = SceneLoaderList[i]->loadScene(file, userDataSerializer, rootNode);
-
-	if (!ret)
-		os::Printer::log("Could not load scene file, perhaps the format is unsupported: ", filename.c_str(), ELL_ERROR);
-
+	const bool ret = loadScene(file, userDataSerializer, rootNode);
 	file->drop();
 
-	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 	return ret;
 }
 
@@ -2177,7 +2187,6 @@ bool CSceneManager::loadScene(io::IReadFile* file, ISceneUserDataSerializer* use
 	if (!file)
 	{
 		os::Printer::log("Unable to open scene file", ELL_ERROR);
-		_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 		return false;
 	}
 
@@ -2192,7 +2201,6 @@ bool CSceneManager::loadScene(io::IReadFile* file, ISceneUserDataSerializer* use
 	if (!ret)
 		os::Printer::log("Could not load scene file, perhaps the format is unsupported: ", file->getFileName().c_str(), ELL_ERROR);
 
-	_IRR_IMPLEMENT_MANAGED_MARSHALLING_BUGFIX;
 	return ret;
 }
 

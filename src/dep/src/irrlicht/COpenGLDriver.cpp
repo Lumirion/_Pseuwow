@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2011 Nikolaus Gebhardt
+// Copyright (C) 2002-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -16,6 +16,10 @@
 #include "COpenGLNormalMapRenderer.h"
 #include "COpenGLParallaxMapRenderer.h"
 #include "os.h"
+
+#ifdef _IRR_COMPILE_WITH_OSX_DEVICE_
+#include "MacOSX/CIrrDeviceMacOSX.h"
+#endif
 
 #ifdef _IRR_COMPILE_WITH_SDL_DEVICE_
 #include <SDL/SDL.h>
@@ -390,13 +394,13 @@ bool COpenGLDriver::initDriver(CIrrDeviceWin32* device)
 			if (PixelFormat)
 				break;
 		}
-	}
 
-	// set pixel format
-	if (!SetPixelFormat(HDc, PixelFormat, &pfd))
-	{
-		os::Printer::log("Cannot set the pixel format.", ELL_ERROR);
-		return false;
+		// set pixel format
+		if (!SetPixelFormat(HDc, PixelFormat, &pfd))
+		{
+			os::Printer::log("Cannot set the pixel format.", ELL_ERROR);
+			return false;
+		}
 	}
 	os::Printer::log("Pixel Format", core::stringc(PixelFormat).c_str(), ELL_DEBUG);
 
@@ -946,21 +950,23 @@ void COpenGLDriver::setTransform(E_TRANSFORMATION_STATE state, const core::matri
 		{
 			// OpenGL only has a model matrix, view and world is not existent. so lets fake these two.
 			glMatrixMode(GL_MODELVIEW);
-			glLoadMatrixf((Matrices[ETS_VIEW] * Matrices[ETS_WORLD]).pointer());
+
+			// first load the viewing transformation for user clip planes
+			glLoadMatrixf((Matrices[ETS_VIEW]).pointer());
+
 			// we have to update the clip planes to the latest view matrix
 			for (u32 i=0; i<MaxUserClipPlanes; ++i)
 				if (UserClipPlanes[i].Enabled)
 					uploadClipPlane(i);
+
+			// now the real model-view matrix
+			glMultMatrixf(Matrices[ETS_WORLD].pointer());
 		}
 		break;
 	case ETS_PROJECTION:
 		{
 			glMatrixMode(GL_PROJECTION);
 			glLoadMatrixf(mat.pointer());
-			// we have to update the clip planes to the latest view matrix
-			for (u32 i=0; i<MaxUserClipPlanes; ++i)
-				if (UserClipPlanes[i].Enabled)
-					uploadClipPlane(i);
 		}
 		break;
 	case ETS_COUNT:
@@ -1013,7 +1019,7 @@ bool COpenGLDriver::updateVertexHardwareBuffer(SHWBufferLink_opengl *HWBuffer)
 	core::array<c8> buffer;
 	if (!FeatureAvailable[IRR_ARB_vertex_array_bgra] && !FeatureAvailable[IRR_EXT_vertex_array_bgra])
 	{
-		//buffer vertex data, and convert colours...
+		//buffer vertex data, and convert colors...
 		buffer.set_used(vertexSize * vertexCount);
 		memcpy(buffer.pointer(), vertices, vertexSize * vertexCount);
 		vbuf = buffer.const_pointer();
@@ -3446,6 +3452,8 @@ void COpenGLDriver::assignHardwareLight(u32 lightIndex)
 		glLightf(lidx, GL_SPOT_EXPONENT, 0.0f);
 		glLightf(lidx, GL_SPOT_CUTOFF, 180.0f);
 	break;
+	default:
+	break;
 	}
 
 	// set diffuse color
@@ -3580,7 +3588,7 @@ void COpenGLDriver::drawStencilShadowVolume(const core::array<core::vector3df>& 
 
 	glDisable(GL_LIGHTING);
 	glDisable(GL_FOG);
-	glDepthFunc(GL_LEQUAL);
+	glDepthFunc(GL_LESS);
 	glDepthMask(GL_FALSE); // no depth buffer writing
 	if (debugDataVisible & scene::EDS_MESH_WIRE_OVERLAY)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -3594,8 +3602,6 @@ void COpenGLDriver::drawStencilShadowVolume(const core::array<core::vector3df>& 
 	glVertexPointer(3,GL_FLOAT,sizeof(core::vector3df),triangles.const_pointer());
 	glStencilMask(~0);
 	glStencilFunc(GL_ALWAYS, 0, ~0);
-	glPolygonOffset(-1.f,-1.f);
-	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	GLenum incr = GL_INCR;
 	GLenum decr = GL_DECR;
@@ -4614,7 +4620,7 @@ bool COpenGLDriver::setClipPlane(u32 index, const core::plane3df& plane, bool en
 void COpenGLDriver::uploadClipPlane(u32 index)
 {
 	// opengl needs an array of doubles for the plane equation
-	double clip_plane[4];
+	GLdouble clip_plane[4];
 	clip_plane[0] = UserClipPlanes[index].Plane.Normal.X;
 	clip_plane[1] = UserClipPlanes[index].Plane.Normal.Y;
 	clip_plane[2] = UserClipPlanes[index].Plane.Normal.Z;
@@ -4703,6 +4709,27 @@ GLenum COpenGLDriver::getGLBlend(E_BLEND_FACTOR factor) const
 		case EBF_SRC_ALPHA_SATURATE:	r = GL_SRC_ALPHA_SATURATE; break;
 	}
 	return r;
+}
+
+GLenum COpenGLDriver::getZBufferBits() const
+{
+	GLenum bits = 0;
+	switch (Params.ZBufferBits)
+	{
+	case 16:
+		bits = GL_DEPTH_COMPONENT16;
+		break;
+	case 24:
+		bits = GL_DEPTH_COMPONENT24;
+		break;
+	case 32:
+		bits = GL_DEPTH_COMPONENT32;
+		break;
+	default:
+		bits = GL_DEPTH_COMPONENT;
+		break;
+	}
+	return bits;
 }
 
 #ifdef _IRR_COMPILE_WITH_CG_

@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2011 Nikolaus Gebhardt
+// Copyright (C) 2002-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -249,7 +249,7 @@ void CAnimatedMeshSceneNode::OnAnimate(u32 timeMs)
 		LastTimeMs = timeMs;
 	}
 
-	// set CurrentFrameNr 
+	// set CurrentFrameNr
 	buildFrameNr(timeMs-LastTimeMs);
 
 	// update bbox
@@ -777,6 +777,11 @@ void CAnimatedMeshSceneNode::setLoopMode(bool playAnimationLooped)
 	Looping = playAnimationLooped;
 }
 
+//! returns the current loop mode
+bool CAnimatedMeshSceneNode::getLoopMode() const
+{
+	return Looping;
+}
 
 //! Sets a callback interface which will be called if an animation
 //! playback has ended. Set this to 0 to disable the callback again.
@@ -1150,8 +1155,12 @@ ISceneNode* CAnimatedMeshSceneNode::clone(ISceneNode* newParent, ISceneManager* 
 	newNode->Looping = Looping;
 	newNode->ReadOnlyMaterials = ReadOnlyMaterials;
 	newNode->LoopCallBack = LoopCallBack;
+	if (newNode->LoopCallBack)
+		newNode->LoopCallBack->grab();
 	newNode->PassCount = PassCount;
 	newNode->Shadow = Shadow;
+	if (newNode->Shadow)
+		newNode->Shadow->grab();
 	newNode->JointChildSceneNodes = JointChildSceneNodes;
 	newNode->PretransitingSave = PretransitingSave;
 	newNode->RenderFromIdentity = RenderFromIdentity;

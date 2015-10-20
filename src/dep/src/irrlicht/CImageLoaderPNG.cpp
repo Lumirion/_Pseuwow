@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2011 Nikolaus Gebhardt
+// Copyright (C) 2002-2012 Nikolaus Gebhardt
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
@@ -258,7 +258,7 @@ IImage* CImageLoaderPng::loadImage(io::IReadFile* file) const
 		png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 		delete [] RowPointers;
 		image->unlock();
-		delete [] image;
+		delete image;
 		return 0;
 	}
 
